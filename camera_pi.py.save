@@ -24,7 +24,6 @@ class streamThread(threading.Thread):
         self.last_access = time.time()
         self.frame = None
         self.D = 99
-        self.centro = (0, 0)
         
     def run(self):
         with picamera.PiCamera() as camera:
@@ -33,7 +32,7 @@ class streamThread(threading.Thread):
                 camera.resolution = (320, 240)
                 camera.hflip = True
                 camera.vflip = True
-                centro = (156, 132)
+                centro = (round(270/3), round(395/3))
 
                 # let camera warm up
                 camera.start_preview()
@@ -66,12 +65,10 @@ class streamThread(threading.Thread):
 
                         # Se calcula distancia euclidiana con el centro
                         dist = ((x_pos - centro[0])**2 + (y_pos - centro[1])**2 )**0.5
-                        #print(dist)
-                        #print((x_pos, y_pos))
-                        
+
                         loc = (x_pos, y_pos) # Tupla con los valores del centro del puntero
                         # Se calcula la tangente de \theta segun la regresion realizada 
-                        tang = np.tan(0.00322*dist + 0.0175)
+                        tang = np.tan(0.00137*dist + 0.0292)
 
                         if tang > 0: # Calculo de la distancia en cm 
                             self.D =  int(4.5 / tang)
@@ -80,28 +77,14 @@ class streamThread(threading.Thread):
                         #print(f"Distancia del obstáculo: {D} cm")
                         
                         string = f"Distancia del obstáculo: {self.D} cm \n"
-                        #print(self.D)
-                        if self.D < 30:
-                            pass
-                            #print("STOP!")
-                            #cv2.putText(image, f"CUIDADO!!", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255, 1))
-                            #self.ser.write(bytes("STOP\n", 'utf-8'))
-			#self.ser.write(bytes(string, 'utf-8'))
+                        #self.ser.write(bytes(string, 'utf-8'))
                         #line = self.ser.readline().decode('utf-8').rstrip()
                         #print(line)
+			
                         self.counter = 0
                     else:
                         self.counter += 1
                     
-                    if self.D < 60 and self.D > 50:
-                        cv2.putText(image, f"OBSTACULO CERCA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-                    elif self.D < 50 and self.D > 40:
-                        cv2.putText(image, f"OBSTACULO AL FRENTE!", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-                    elif self.D < 40 and self.D > 30:
-                        cv2.putText(image, f"DETENTE!!", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-                    elif self.D < 30:
-                        self.ser.write(bytes("MOVE\n", 'utf-8'))
-                        cv2.putText(image, f"FRENADO EMERGENCIA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                     cv2.putText(image, f"Distancia del obstaculo: {self.D} cm",(10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255),1)
 
                     ret, jpeg = cv2.imencode('.jpg', image)
@@ -117,7 +100,8 @@ class streamThread(threading.Thread):
                     # the last 10 seconds stop the thread
                     if time.time() - self.last_access > 10:
                         break
-                        
+                    
+                print("algo")    
                 time.sleep(5)
  
     def pause(self):
